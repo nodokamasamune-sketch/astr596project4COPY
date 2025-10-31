@@ -7,8 +7,10 @@ from data import data_points_reader, covariance_reader
 
 
 def log_likelihood(theta, z_data, mu_data, Cinv):
+# log likelihood for gaussian errors with covariance C eqn:
+#ln L(theta) = - 1/2 n-sum (1, j = 1) r_i [C-1]_ij r_j
+#r_i = mu_i^obs - mu_i^theory(z_i;theta)
 
-    
 
     pass
 
