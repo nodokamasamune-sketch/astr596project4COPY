@@ -2,6 +2,14 @@
 import numpy as np
 from scipy.integrate import quad
 
+def distance_modulus(z, Omega_m, h = 0.7, Pen=False):
+    #distance modulus eqn: mu = 25 - 5 log_10 (h) + 5 log_10 (D*_L / Mpc)
+    I = intd(z, Omega_m, Pen=Pen)
+    DL_star = luminosity_distance(z, I, h)
+    mu = 25 - 5 * np.log10(h) + 5 * np.log10(DL_star) 
+    
+    return mu
+
 def luminosity_distance(z, I, h=0.7):
     #for flat univere (Omega_lambda = 1 - Omega_m), the luminosity distance eqn: D_L(z) = [c (1 + z)] / H_0 * integral(dz' / E(z')) from 0 to z
     #E(z) = sqrt(Omega_m * (1 + z)^3 + (1 - Omega_m))
@@ -10,17 +18,6 @@ def luminosity_distance(z, I, h=0.7):
     c = 3e5 #km/s
     D_L = (c / H_0) * (1 + z) * I
     return D_L
-
-def distance_modulus(z, Omega_m, h = 0.7, Pen=False):
-    #distance modulus eqn: mu = 25 - 5 log_10 (h) + 5 log_10 (D*_L / Mpc)
-    I = intd(z, Omega_m, Pen=Pen)
-    DL_star = luminosity_distance(z, Omega_m, I, h = h)
-    mu = 25 - 5 * np.log10(h) + 5 * np.log10(DL_star) 
-    
-    return mu
-
-def integrand(zp, Omega_m):
-    return 1/np.sqrt(Omega_m * (1 + zp)**3 + (1 - Omega_m))
 
 
 def eta(a, Omega_m):
@@ -31,7 +28,8 @@ def eta(a, Omega_m):
 
 def intd(z, Omega_m, Pen=False):
     if Pen==False:
-        I, error = quad(integrand(z, Omega_m), 0, z)
+        inte = lambda z, Omega_m: 1/np.sqrt(Omega_m * (1 + z)**3 + (1 - Omega_m))
+        I, error = quad(inte, 0, z, args=(Omega_m,))
 
     else:
         I = (eta(1, Omega_m) - eta(1/(1 + z), Omega_m))
@@ -40,6 +38,7 @@ def intd(z, Omega_m, Pen=False):
 
 '''
 ask about Mpc --> unit conversion?
-how much of a difference in mu should we see between integration and approximation ?
+how much of a difference in mu should we see between integration and approximation ? 0.4%
 put definitions + eqns outside
+ask how to use calculator
 '''
