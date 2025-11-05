@@ -2,17 +2,9 @@
 
 #imports
 import numpy as np
-from data_reader import data_points_reader, covariance_reader
-from cosmology import distance_modulus
+from src.data_reader import get_data
+from src.cosmology import distance_modulus
 
-def data():
-    dat = data_points_reader('../data/jla_mub.txt')
-    z_data = dat['z']
-    mu_data = dat['mu']
-    C = covariance_reader('../data/jla_mug_covmatrix.txt')
-    Cinv = np.linalg.inv(C)
-
-    return z_data, mu_data, Cinv
 
 
 def log_likelihood(theta, z_data, mu_data, Cinv):
@@ -22,7 +14,7 @@ def log_likelihood(theta, z_data, mu_data, Cinv):
     Omega_m, h = theta
 
     # theoretical mu
-    mu_theory = np.array([[distance_modulus(z, Omega_m, h=h, Pen=True)] for z in z_data])
+    mu_theory = np.array([distance_modulus(z, Omega_m, h=h, Pen=True) for z in z_data])
     
     # residuals
     r = mu_data - mu_theory

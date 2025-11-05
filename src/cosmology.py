@@ -6,7 +6,7 @@ def distance_modulus(z, Omega_m, h = 0.7, Pen=False):
     #distance modulus eqn: mu = 25 - 5 log_10 (h) + 5 log_10 (D*_L / Mpc)
     I = intd(z, Omega_m, Pen=Pen)
     DL_star = luminosity_distance(z, I, h)
-    mu = 25 - 5 * np.log10(h) + 5 * np.log10(DL_star) 
+    mu = 25 + 5 * np.log10(DL_star) 
     
     return mu
 

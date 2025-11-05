@@ -2,21 +2,36 @@
 
 # imports
 import numpy as np
+import os
 
 def data_points_reader(filename):
-    dat = np.genfromtxt(filename, skip_header = 1, names=('z, mu'))
+    dat = np.genfromtxt(filename, skip_header = 1, names=('z', 'mu'))
 
     return dat
 
 def covariance_reader(filename):
     cov = np.genfromtxt(filename)
-    cov_matrix = np.empty((31, 31))
-    for i in range(31):
-        min = 31 * i
-        max = 31 * (i + 1)
-        cov_matrix[i:31] = cov[min:max]
+    cov_matrix = cov.reshape((31, 31))
 
     return cov_matrix
+
+def get_data():
+    current_dir = os.path.dirname(__file__)
+    project_root = os.path.abspath(os.path.join(current_dir, '..'))
+    data_dir = os.path.join(project_root, 'data')
+
+
+    mubpath = os.path.join(data_dir, 'jla_mub.txt')
+    cov_path = os.path.join(data_dir, 'jla_mug_covmatrix.txt')
+
+    dat = data_points_reader(mubpath)
+    z_data = dat['z']
+    mu_data = dat['mu']
+
+    C = covariance_reader(cov_path)
+    Cinv = np.linalg.inv(C)
+
+    return z_data, mu_data, Cinv
     
 '''
 ask about cov matrix file format: are the first 31 points in the list the first row?
