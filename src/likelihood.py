@@ -3,7 +3,7 @@
 #imports
 import numpy as np
 #from src.data_reader import get_data
-from cosmology import distance_modulus
+from src.cosmology import distance_modulus
 
 
 

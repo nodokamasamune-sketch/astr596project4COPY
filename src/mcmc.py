@@ -3,8 +3,8 @@
 # general package imports
 import numpy as np
 from scipy.stats import multivariate_normal
-from data_reader import get_data
-np.random.seed(42)
+from src.data_reader import get_data
+#np.random.seed(42)
 
 z_data, mu_data, Cinv = get_data()
 
