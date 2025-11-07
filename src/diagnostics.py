@@ -72,3 +72,4 @@ def gelman_rubin(chains):
 
     return Rhat
 
+ 

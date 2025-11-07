@@ -2,8 +2,8 @@
 
 #imports
 import numpy as np
-from src.data_reader import get_data
-from src.cosmology import distance_modulus
+#from src.data_reader import get_data
+from cosmology import distance_modulus
 
 
 
@@ -19,13 +19,15 @@ def log_likelihood(theta, z_data, mu_data, Cinv):
     # residuals
     r = mu_data - mu_theory
 
-    loglikelihood = - 1/2 * np.dot(r, np.dot(Cinv, r))
+    loglikelihood = - 0.5 * np.dot(r, np.dot(Cinv, r))
 
     return loglikelihood
 
 
 def log_prior(theta):
     # prior probabilities
+    # use assertions
+    # sample from uniform distribution and take log + vectorize
     Omega_m, h = theta
     if 0.0 < Omega_m < 1.0 and 0.4 < h < 1.0:
         return 0.0 # log (1.0)

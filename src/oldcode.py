@@ -39,3 +39,26 @@ def log_posterior(theta, z_data, mu_data, Cinv):
     llh = log_likelihood(theta, z_data, mu_data, Cinv)
 
     return lp + llh
+
+
+
+
+def proposal(theta, sigma):
+    step = np.random.normal(0, sigma, size=len(theta))
+    theta_new = theta + step
+
+    log_Q_ratio = 0.0 # symmetric
+
+    return theta_new, log_Q_ratio
+
+
+while acc_rate < 0.2 or acc_rate > 0.5:
+    chain, acc_rate = metropolis_hastings(log_posterior, theta_init, sigmas, n, args=(z_data, mu_data, Cinv))
+
+    if acc_rate < 0.2:
+        g = np.random.uniform(0.6, 0.9)
+        sigmas = sigmas*(g**2)
+
+    if acc_rate > 0.5:
+        g = np.random.uniform(1.1, 1.5)
+        sigmas = sigmas*(g**2)
