@@ -62,3 +62,31 @@ while acc_rate < 0.2 or acc_rate > 0.5:
     if acc_rate > 0.5:
         g = np.random.uniform(1.1, 1.5)
         sigmas = sigmas*(g**2)
+
+
+def hmc_proposal(state, epsilon):
+    M = np.array([[1, 0], [0, 1]])
+    #p = np.random.normal(0, M)
+    #state = (theta, p)
+
+    theta = state[0]
+    p = state[1]    
+
+    half_p = p + (epsilon/2) * grad_log_posterior(theta, log_post_fn, h=1e-6)
+
+    full_theta = theta + epsilon * half_p
+
+    full_p = half_p + (epsilon/2) * grad_log_posterior(theta, log_post_fn, h=1e-6)
+
+    return (full_theta, - full_p)
+
+
+def hamiltonian_monte_carlo(log_prob_fn, grad_log_prob_fn, theta_init, epsilon, L, n_steps, args=()):
+    theta = theta_init
+    # M = identity matrix
+    M = np.array([[1, 0], [0, 1]])
+    p = np.random.normal(0, M)
+    state = (theta, p)
+    state_prop = leapfrog(theta)
+
+    del_H = H(state_prop) - H()

@@ -19,6 +19,7 @@ def grad_log_posterior(theta, log_post_fn, h=1e-6):
 
     return grad
 
+
 '''
 complete hmc algorithm
 phase 1: generate proposal via hamiltonian dynamics
@@ -28,21 +29,25 @@ phase 1: generate proposal via hamiltonian dynamics
  L steps, \epsilon stepsize --> new_state
  negate momentum: p_new --> -p_new
 '''
-def hmc_proposal(state, epsilon):
-    M = np.array([[1, 0], [0, 1]])
-    #p = np.random.normal(0, M)
-    #state = (theta, p)
 
-    theta = state[0]
-    p = state[1]    
 
-    half_p = p + (epsilon/2) * grad_log_posterior(theta, log_post_fn, h=1e-6)
+def leapfrog(theta, p, epsilon, L, log_post_fn, grad_fn):
+    grad = grad_fn(theta, log_post_fn)
+    p = p + 0.5 * epsilon * grad
+    
+    for i in range(L):
+        theta = theta + epsilon * p
+        
+        if i != L - 1:
+            grad = grad_fn(theta, log_post_fn)
+            p = p + epsilon * grad
 
-    full_theta = theta + epsilon * half_p
+        
+    grad = grad_fn(theta, log_post_fn)
+    p = p + 0.5 * epsilon * grad
 
-    full_p = half_p + (epsilon/2) * grad_log_posterior(theta, log_post_fn, h=1e-6)
+    return theta, -p
 
-    return (full_theta, - full_p)
 
 
 '''
@@ -55,16 +60,41 @@ phase 2: metropolis acceptance- reject or accept proposal
  look for acc_rate ~ [0.6 - 0.9]
 '''
 
+def hamiltonian(theta, p, log_prob_fn):
+    U = - log_prob_fn(theta)
+    K = 0.5 * np.dot(p, p)
 
-def hamiltonian_monte_carlo(log_prob_fn, grad_log_prob_fn, theta_init, epsilon, L, n_steps, args=()):
+    return U + K
+
+def hmc(log_prob_fn, grad_log_prob_fn, theta_init, epsilon, L, n_steps):
     theta = theta_init
-    # M = identity matrix
-    M = np.array([[1, 0], [0, 1]])
-    p = np.random.normal(0, M)
-    state = (theta, p)
-    state_prop = hmc_proposal(theta)
+    chain = []
+    accepts = 0
 
-    del_H = H(state_prop) - H()
+    for step in range(n_steps):
+        p = np.random.normal(0, 1, size=theta.shape)
+
+        H_current = hamiltonian(theta, p, log_prob_fn)
+
+        theta_prop, p_prop = leapfrog(theta, p, epsilon, L, log_prob_fn, grad_log_posterior)
+
+        H_prop = hamiltonian(theta_prop, p_prop, log_prob_fn)
+
+        delta_H = H_prop - H_current
+
+        if np.random.rand() < np.exp(-delta_H):
+            theta = theta_prop
+            accepts += 1
+        
+        chain.append(theta.copy())
+
+    accept_rate = accepts / n_steps
+    
+    return np.array(chain), accept_rate
+        
+
+
+
 
 '''
 H(theta, p) = U(theta) + K(p)
