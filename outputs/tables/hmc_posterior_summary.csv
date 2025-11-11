@@ -1,0 +1,3 @@
+Parameter,Mean,StdDev,16th,50th,84th,"Correlation(Omega_m,h)"
+Omega_m,0.2971,0.0309,0.2659,0.2961,0.3286,
+h,0.7029,0.0072,0.6956,0.7029,0.7101,-0.617

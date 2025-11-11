@@ -29,7 +29,7 @@ def log_prior(theta):
     # use assertions
     # sample from uniform distribution and take log + vectorize
     Omega_m, h = theta
-    if 0.0 < Omega_m < 1.0 and 0.4 < h < 1.0:
+    if 0.0 < Omega_m < 1 and 0.4 < h < 1:
         return 0.0 # log (1.0)
     else:
         return -np.inf
@@ -45,12 +45,3 @@ def log_posterior(theta, z_data, mu_data, Cinv):
 
     return lp + llh
 
-'''
-make into class? - no
-
-Invert C once at the start using np.linalg.inv(C), then reuse Cinv - yes
-
-Use flat (uniform) priors with physical bounds (think about reasonable ranges from the Scientific Background) omega=0.3, h= [0.4, 1.0]
-
-Return -np.inf for parameters outside prior bounds
-'''

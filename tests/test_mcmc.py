@@ -6,15 +6,16 @@ from src.likelihood import log_posterior
 from src.data_reader import get_data
 from src.diagnostics import autocorrelation, effective_sample_size, gelman_rubin
 from tests.mcmc_tuning import sigma_tuning
-
+from tests.plot_mcmc import plot_rhat_convergence
 # Get directory where this script is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Build a path to ../outputs/tables relative to the script
-OUTPUT_DIR = os.path.join(BASE_DIR, "..", "outputs", "tables")
-
+table_dir = os.path.join(BASE_DIR, "..", "outputs", "tables")
+plot_dir = os.path.join(BASE_DIR, '..', 'outputs', 'figures')
 # Make sure the directory exists
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(table_dir, exist_ok=True)
+os.makedirs(plot_dir, exist_ok=True)
 
  
 z_data, mu_data, Cinv = get_data()
@@ -35,7 +36,7 @@ summary_data = []
 
 for k in range(4):
     # Randomly initialize Omega_m and h in [0, 1]
-    omega_m0 = np.random.uniform(0, 1)
+    omega_m0 = np.random.uniform(0, 1.)
     h0 = np.random.uniform(0.4, 1)
     theta_init = np.array([omega_m0, h0])
 
@@ -93,6 +94,8 @@ summary_table.loc[summary_table["Chain"] == "R̂", ["ESS_Ωm", "ESS_h"]] = [rhat
 print("\n=== MCMC Diagnostics Summary ===")
 print(summary_table.to_string(index=False))
 
-output_path = os.path.join(OUTPUT_DIR, "mcmc_diagnostics_summary.csv")
+output_path = os.path.join(table_dir, "mcmc_diagnostics_summary.csv")
 summary_table.to_csv(output_path, index=False)
 print(f"\nSaved diagnostics table to: {output_path}")
+
+plot_rhat_convergence(chains, plot_dir)

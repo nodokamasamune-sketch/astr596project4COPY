@@ -1,3 +1,36 @@
+"""
+USED ChatGPT TO WRITE DOC STRING 
+
+Compute the theoretical distance modulus μ(z) for a flat ΛCDM universe.
+
+This module provides functions to calculate the distance modulus as a function
+of redshift z and matter density parameter Ω_m, assuming spatial flatness 
+(Ω_Λ = 1 - Ω_m). The distance modulus is derived from the luminosity distance,
+which depends on the cosmological expansion rate.
+
+Functions:
+    distance_modulus(z, Omega_m, h=0.7, Pen=False)
+        Computes μ(z) = 25 + 5 log10(D_L / Mpc) using either direct integration 
+        or Pen’s analytic approximation.
+    luminosity_distance(z, I, h=0.7)
+        Converts a dimensionless comoving distance integral I(z) into a 
+        luminosity distance D_L(z) in Mpc.
+    eta(a, Omega_m)
+        Auxiliary function used in Pen’s (1999) analytic approximation for 
+        comoving distance.
+    intd(z, Omega_m, Pen=False)
+        Computes the dimensionless comoving distance integral from 0 to z.
+
+Assumptions:
+    - Flat universe (Ω_k = 0)
+    - H_0 = 100 * h km/s/Mpc
+    - c = 3 × 10⁵ km/s
+    - Optional use of Pen (1999) analytic approximation for speed.
+
+Returns:
+    μ(z): distance modulus in magnitudes.
+"""
+
 #compute theoretical distance modulus assuming a flat universe
 import numpy as np
 from scipy.integrate import quad
@@ -46,9 +79,3 @@ def intd(z, Omega_m, Pen=False):
     
     return I
 
-'''
-ask about Mpc --> unit conversion?
-how much of a difference in mu should we see between integration and approximation ? 0.4%
-put definitions + eqns outside
-ask how to use calculator
-'''

@@ -1,45 +1,78 @@
-# find optimal epsilon and L step size
-
-# epsilon : delta H < 1 for most samples, and acceptance rate 60 - 90 
-# if acceptance too high --> increase epsilon
-# if acceptance too low --> decerase epsilon
-
-# L :
-# L too short --> proposals close to current state; high autocorelation
-# L too long --> trajectory curves back & wasted computation time
-# L tuned: trajectory travels approximately one autocorrelation length in parameters space
-# Roughly L * epsilon ~ diameter of posterior typical set
-# Rule of thumb: start with L ~ 10 - 50; adjust based on ACF
+# tests/hmc_tuning_plot.py
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
 from src.hmc import grad_log_posterior, leapfrog, hamiltonian, hamiltonian_monte_carlo
-
 from src.likelihood import log_posterior
-#def log_posterior(theta, z_data, mu_data, Cinv):
-
 from src.data_reader import get_data
 
+# -------------------
+# Directory setup
+# -------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FIG_DIR = os.path.join(BASE_DIR, "..", "outputs", "figures")
+os.makedirs(FIG_DIR, exist_ok=True)
+
+# -------------------
+# HMC parameters
+# -------------------
 z_data, mu_data, Cinv = get_data()
 
-# initial guess:
-ep = 0.1
-L = 30
+epsilon = 0.01   # leapfrog step size
+L = 10           # number of leapfrog steps
+n_steps = 1000   # number of HMC iterations
+theta_init = np.array([0.3, 0.7])
 
-def energy_cons(log_post_fn,theta_init, epsilon, L, n_steps=100, args=()):
-    deltas = []
-    for step in range(int(n_steps)):
-        p_init = np.random.normal(0, 1, size=theta_init.shape)
-        H_init = hamiltonian(theta_init, p_init, log_post_fn, *args)
-        theta_prop, p_prop = leapfrog(theta_init, p_init, epsilon, L, log_post_fn, grad_log_posterior, *args)
-        H1 = hamiltonian(theta_prop, p_prop, log_post_fn, *args)
-        deltas.append(H1 - H_init)
-    return np.array(deltas)
+# -------------------
+# Run HMC sampler
+# -------------------
+chain, deltas, accept_rate = hamiltonian_monte_carlo(
+    log_post_fn=log_posterior,
+    theta_init=theta_init,
+    epsilon=epsilon,
+    L=L,
+    n_steps=n_steps,
+    args=(z_data, mu_data, Cinv)
+)
 
+print(f"Acceptance rate: {accept_rate:.3f}")
+deltas = np.asarray(deltas)
 
-deltas = energy_cons(log_posterior, np.array([0.3, 0.7]), ep, L, n_steps=100, args=(z_data, mu_data, Cinv))
+# -------------------
+# Plot ΔH vs iteration
+# -------------------
+plt.figure(figsize=(8, 4.5))
+plt.plot(np.arange(len(deltas)), deltas, lw=0.8, color="tab:blue", alpha=0.7)
+plt.axhline(0, color="k", lw=1, linestyle="--", alpha=0.6)
+plt.axhline(1, color="tab:red", lw=0.8, linestyle=":", alpha=0.5)
+plt.axhline(-1, color="tab:red", lw=0.8, linestyle=":", alpha=0.5)
+plt.xlabel("Iteration", fontsize=12)
+plt.ylabel(r"$\Delta H$ (Hamiltonian difference)", fontsize=12)
+plt.title("ΔH vs Iteration (Energy Conservation Diagnostic)")
+plt.grid(alpha=0.3)
+plt.tight_layout()
 
+delta_iter_path = os.path.join(FIG_DIR, "deltaH_vs_iteration.png")
+plt.savefig(delta_iter_path, dpi=300, bbox_inches="tight")
+plt.close()
+print(f"Saved: {delta_iter_path}")
 
-steps = np.arange(deltas.size)
-plt.plot(steps, deltas)
-plt.show()
+# -------------------
+# Plot ΔH histogram
+# -------------------
+plt.figure(figsize=(7, 5))
+plt.hist(deltas, bins=40, color="tab:orange", alpha=0.75, edgecolor="k")
+plt.axvline(0, color="k", lw=1, linestyle="--", alpha=0.6)
+plt.axvline(1, color="tab:red", lw=0.8, linestyle=":", alpha=0.6)
+plt.axvline(-1, color="tab:red", lw=0.8, linestyle=":", alpha=0.6)
+plt.xlabel(r"$\Delta H$ (Hamiltonian difference)", fontsize=12)
+plt.ylabel("Frequency", fontsize=12)
+plt.title("Histogram of ΔH (Energy Conservation Check)")
+plt.grid(alpha=0.3)
+plt.tight_layout()
+
+delta_hist_path = os.path.join(FIG_DIR, "deltaH_histogram.png")
+plt.savefig(delta_hist_path, dpi=300, bbox_inches="tight")
+plt.close()
+print(f"Saved: {delta_hist_path}")
