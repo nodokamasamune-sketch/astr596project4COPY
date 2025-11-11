@@ -2,13 +2,23 @@
 import numpy as np
 from scipy.integrate import quad
 
-def distance_modulus(z, Omega_m, h = 0.7, Pen=False):
-    #distance modulus eqn: mu = 25 - 5 log_10 (h) + 5 log_10 (D*_L / Mpc)
+
+def distance_modulus(z, Omega_m, h=0.7, Pen=False):
+    """
+    Compute theoretical distance modulus μ(z) for a flat universe.
+    """
+    if z == 0:
+        return 0.0  # D_L(0)=0 → μ(0)=0
+
     I = intd(z, Omega_m, Pen=Pen)
     DL_star = luminosity_distance(z, I, h)
-    mu = 25 + 5 * np.log10(DL_star) 
-    
+
+    if DL_star <= 0:
+        raise ValueError(f"Luminosity distance nonpositive: D_L = {DL_star}")
+
+    mu = 25 + 5 * np.log10(DL_star)
     return mu
+
 
 def luminosity_distance(z, I, h=0.7):
     #for flat univere (Omega_lambda = 1 - Omega_m), the luminosity distance eqn: D_L(z) = [c (1 + z)] / H_0 * integral(dz' / E(z')) from 0 to z

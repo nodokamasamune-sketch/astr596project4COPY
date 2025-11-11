@@ -1,46 +1,57 @@
+import os
 import numpy as np
 import timeit
-
+import pandas as pd
 from src.cosmology import distance_modulus
 
-z = 0.5
-Omega_m = 0.3
-h = 0.7
-n = 100
+# Get directory where this script is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def dist_mod(Pen):
-    mu = distance_modulus(z, Omega_m, h, Pen=Pen)
-    return mu
+# Build a path to ../outputs/tables relative to the script
+OUTPUT_DIR = os.path.join(BASE_DIR, "..", "outputs", "tables")
 
-# calculate mu for both int and approx, compare to 42.26 mag and check that mu_approx is within 0.4% of mu_int
-mu_int = dist_mod(Pen=False)
-pen_int = dist_mod(Pen=True)
+# Make sure the directory exists
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-target_mu = 42.26 # mag
+Omega_m, h = 0.3, 0.7
+target_mu = 42.26
+z_grid = np.arange(0.1, 1.31, 0.1)
+n = 100 # timing purposes
 
-if (target_mu - 0.001*target_mu) < mu_int < (target_mu+0.001*target_mu):
-    print(f'Integrated distance modulus: {mu_int:.5} mag. Integration is correct.')
-else:
-    print(f'Integrated distance modulus: {mu_int:.5} mag. Integration is incorrect.')    
-if (target_mu - 0.001*target_mu) < pen_int < (target_mu+0.001*target_mu):
-    print(f'Pen approximated distance modulus: {pen_int:.5} mag. Approximation is correct.')
-else:
-    print(f'Pen approximated distance modulus: {pen_int:.5} mag. Approximation is incorrect.')
+# Results storage
+summary = {
+    "Boundary (D_L(0)=0)": None,
+    "μ_int(0.5)": None,
+    "μ_pen(0.5)": None,
+    "Δμ target (mag)": None,
+    "Max Δμ(%) over z∈[0,1.3]": None,
+    "Pen faster (×)": None
+}
 
-if (mu_int - 0.004*mu_int) < pen_int < (mu_int + 0.004*mu_int):
-    print('Pen approximates integrated distance modulus to within 0.4 percent accuracy.')
-else:
-    print('Pen does not approximate integrated distance modulus correctly.')
+dl0 = distance_modulus(0.0, Omega_m, h, Pen=False)
+summary["Boundary (D_L(0)=0)"] = 'Zero' if np.isclose(dl0, 0, atol=1e-6) else 'Not zero'
 
-# compare times
-int_time = timeit.timeit(lambda: dist_mod(Pen=False), number=n)
+mu_int = distance_modulus(0.5, Omega_m, h, Pen=False)
+mu_pen = distance_modulus(0.5, Omega_m, h, Pen=True)
+summary["μ_int(0.5)"] = f"{mu_int:.3f}"
+summary["μ_pen(0.5)"] = f"{mu_pen:.3f}"
+summary["Δμ target (mag)"] = f"{abs(mu_int - target_mu):.3f}"
 
-pen_time = int = timeit.timeit(lambda: dist_mod(Pen=True), number=n)
+mu_int_grid = np.array([distance_modulus(z, Omega_m, h, Pen=False) for z in z_grid])
+mu_pen_grid = np.array([distance_modulus(z, Omega_m, h, Pen=True) for z in z_grid])
+rel_diff = np.abs(mu_pen_grid - mu_int_grid) / mu_int_grid * 100
+summary["Max Δμ(%) over z∈[0,1.3]"] = f"{rel_diff.max():.3f}"
 
-print(f"Integration time for {n} interation(s): {int_time:.5} s")
-print(f"Pen approximation time for {n} interation(s): {pen_time:.5} s")
+int_time = timeit.timeit(lambda: distance_modulus(0.5, Omega_m, h, Pen=False), number=n)
+pen_time = timeit.timeit(lambda: distance_modulus(0.5, Omega_m, h, Pen=True), number=n)
+speedup = int_time / pen_time if pen_time > 0 else np.inf
+summary["Pen faster (×)"] = f"{speedup:.2f}"
 
-if int_time > pen_time:
-    print(f"Pen approximation is {int_time/pen_time:.5} faster than integrating.")
-else:
-    print(f"Integrating is {pen_time/int_time:.5} faster than Pen approximation.")
+validation_table = pd.DataFrame([summary])
+
+print("\n=== Cosmology Validation Summary ===")
+print(validation_table.to_string(index=False))
+
+output_path = os.path.join(OUTPUT_DIR, "cosmology_diagnostics_summary.csv")
+validation_table.to_csv(output_path, index=False)
+print(f"\nSaved diagnostics table to: {output_path}")

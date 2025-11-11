@@ -7,23 +7,27 @@ validation tests:
 '''
 import numpy as np
 
+
 def autocorrelation(x):
     N = x.size
     centered = x - x.mean()
     maxlag = N // 2
 
-    nfft = 1 << (2 * N -1).bit_length()
+    nfft = 1 << (2 * N - 1).bit_length()
     fx = np.fft.rfft(centered, n=nfft)
     acov = np.fft.irfft(fx * np.conjugate(fx), n=nfft)[:N]
     acov /= N
     var0 = acov[0]
 
     lags = np.arange(maxlag)
-    rho = acov[:maxlag] / var0
+
+    if var0 == 0 or np.isnan(var0):
+        # Chain is constant → autocorrelation undefined
+        rho = np.zeros(maxlag)
+    else:
+        rho = acov[:maxlag] / var0
 
     return lags, rho
-
-
 
 
 
